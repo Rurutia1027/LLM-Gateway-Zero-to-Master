@@ -73,5 +73,9 @@ export interface IRChatResponse {
         prompt_tokens: number; 
         completion_tokens: number; 
         total_tokens: number; 
-    }
+    }; 
+
+    // Allowed additional fields from upstream responses to pass through without 
+    // strict validation. 
+    [key: string]: unknown; 
 }
