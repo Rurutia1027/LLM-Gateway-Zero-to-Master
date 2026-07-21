@@ -16,7 +16,7 @@ export const orgs = sqliteTable('orgs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   // null = enabled; non-null = disabled timestamp
-  disableAt: integer('disable_at'),
+  disabledAt: integer('disable_at'),
   createdAt: integer('created_at').notNull(),
 });
 
