@@ -1,23 +1,24 @@
-// 第 4 章 v0.4: 内部 Key 体系 + 持久层首次引入
+// Chapter 4 v0.4: internal Key system + first persistence layer
 //
-// 相对 v0.3 的核心变化:
-//   1. 启动时自动跑 drizzle/ 下的 migration, 建出 orgs / users / keys 三张表;
-//   2. /v1/chat/completions 与 /v1/messages 主路径都套上 requireGatewayKey middleware;
-//   3. 新增 /admin/* 一组管理接口, 受 ADMIN_TOKEN 保护, 用于创建 user / 签发 Key / 吊销 Key;
-//   4. 新增 src/cli/issue-key.ts 命令行工具, 服务器初始化时方便签出第一把 Key.
+// Core changes vs v0.3:
+//   1. On startup, auto-run migrations under drizzle/ to create orgs / users / keys;
+//   2. Wrap both /v1/chat/completions and /v1/messages with requireGatewayKey middleware;
+//   3. Add /admin/* management APIs, protected by ADMIN_TOKEN, for creating users /
+//      issuing keys / revoking keys;
+//   4. Add src/cli/issue-key.ts so you can mint the first Key when bootstrapping the server.
 //
-// 内外两套 Key 体系明确分开:
-//   - 外部 Key (上游 Key): OPENAI_API_KEY / DEEPSEEK_API_KEY / ANTHROPIC_API_KEY,
-//     仍然走环境变量; 网关侧使用, 对应上游账号;
-//     未来 Ch8 把它迁到 channels 表, 但生命周期仍由网关运维管.
-//   - 内部 Key (下游 Key): sk-gw-... , 存 DB; 客户端使用, 对应网关用户.
+// Two separate Key systems:
+//   - Upstream (external) keys: OPENAI_API_KEY / DEEPSEEK_API_KEY / ANTHROPIC_API_KEY,
+//     still from env vars; used by the gateway against provider accounts;
+//     Ch8 will move them into a channels table, but lifecycle stays with gateway ops.
+//   - Downstream (internal) keys: sk-gw-..., stored in DB; used by clients as gateway users.
 //
-// 仍然故意暴露的缺陷 (留给后续章节):
-//   - 不计费, 不知道每把 Key 消耗了多少钱 (Ch5)
-//   - 不限流, 单把 Key 可以打爆上游配额 (Ch6)
-//   - 流式仍未做 (Ch7), 旁路与主路径都拒绝 stream:true
-//   - 渠道池, 故障转移 (Ch8)
-//   - 结构化日志, 看板 (Ch9)
+// Intentionally left open (later chapters):
+//   - No billing — cannot attribute spend per Key (Ch5)
+//   - No rate limits — one Key can burn upstream quota (Ch6)
+//   - Streaming still off (Ch7); both paths reject stream:true
+//   - Channel pool / failover (Ch8)
+//   - Structured logs / dashboards (Ch9)
 
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
@@ -25,9 +26,9 @@ import pino from 'pino';
 import 'dotenv/config';
 
 import { IRChatRequestSchema } from './types/ir.js';
-import { OpenAIAdaptor } from './adaptors/openai.js';
-import { DeepSeekAdaptor } from './adaptors/deepseek.js';
-import { AnthropicAdaptor } from './adaptors/anthropic.js';
+import { OpenAIAdapter } from './adaptors/openai.js';
+import { DeepSeekAdapter } from './adaptors/deepseek.js';
+import { AnthropicAdapter } from './adaptors/anthropic.js';
 import { ModelRouter } from './router.js';
 import { runMigrations } from './db/migrate.js';
 import { requireGatewayKey, type AuthVariables } from './auth/middleware.js';
@@ -36,7 +37,7 @@ import { createAdminRouter } from './admin/routes.js';
 const logger = pino({ transport: { target: 'pino-pretty' } });
 
 // ============================================================
-// 启动前: 跑 migration. 数据库结构必须先就位, 中间件才有表可查.
+// Before serving: run migrations. Schema must exist before middleware can query.
 // ============================================================
 const migrationResult = runMigrations();
 if (migrationResult.applied.length > 0) {
@@ -44,9 +45,9 @@ if (migrationResult.applied.length > 0) {
 }
 
 // ============================================================
-// 装配上游 adaptor (与 v0.3 一致, 上游 Key 仍走环境变量)
+// Wire upstream adapters (same as v0.3; upstream keys still come from env)
 // ============================================================
-const anthropicAdaptor = new AnthropicAdaptor({
+const anthropicAdapter = new AnthropicAdapter({
   baseURL: process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com',
   apiKey: process.env.ANTHROPIC_API_KEY ?? '',
   anthropicVersion: process.env.ANTHROPIC_VERSION ?? '2023-06-01',
@@ -55,18 +56,18 @@ const anthropicAdaptor = new AnthropicAdaptor({
 const router = new ModelRouter([
   {
     prefix: 'deepseek-',
-    adaptor: new DeepSeekAdaptor({
+    adapter: new DeepSeekAdapter({
       baseURL: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
       apiKey: process.env.DEEPSEEK_API_KEY ?? '',
     }),
   },
   {
     prefix: 'claude-',
-    adaptor: anthropicAdaptor,
+    adapter: anthropicAdapter,
   },
   {
     prefix: 'gpt-',
-    adaptor: new OpenAIAdaptor({
+    adapter: new OpenAIAdapter({
       name: 'openai',
       baseURL: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com',
       apiKey: process.env.OPENAI_API_KEY ?? '',
@@ -74,7 +75,7 @@ const router = new ModelRouter([
   },
   {
     prefix: 'o1-',
-    adaptor: new OpenAIAdaptor({
+    adapter: new OpenAIAdapter({
       name: 'openai',
       baseURL: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com',
       apiKey: process.env.OPENAI_API_KEY ?? '',
@@ -82,7 +83,7 @@ const router = new ModelRouter([
   },
   {
     prefix: 'o3-',
-    adaptor: new OpenAIAdaptor({
+    adapter: new OpenAIAdapter({
       name: 'openai',
       baseURL: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com',
       apiKey: process.env.OPENAI_API_KEY ?? '',
@@ -93,15 +94,16 @@ const router = new ModelRouter([
 const app = new Hono<{ Variables: AuthVariables }>();
 
 // ============================================================
-// admin 接口: 创建 org / user / 签发 Key / 列 Key / 吊销 Key
-//   受 ADMIN_TOKEN 保护; 详见 src/admin/routes.ts.
+// Admin API: create org / user / issue Key / list Key / revoke Key
+//   Protected by ADMIN_TOKEN; see src/admin/routes.ts.
 // ============================================================
 app.route('/admin', createAdminRouter());
 
 // ============================================================
-// 主路径: /v1/chat/completions (入站 OpenAI 协议)
-//   * 本章新增: 套 requireGatewayKey middleware *
-//   流程: 鉴权 -> 校验 IR -> 路由 -> adaptor 翻译 -> 上游 -> adaptor 归一化 -> 返回
+// Main path: /v1/chat/completions (inbound OpenAI protocol)
+//   * New in this chapter: requireGatewayKey middleware *
+//   Flow: auth -> validate IR -> route -> adapter translate -> upstream
+//         -> adapter normalize -> response
 // ============================================================
 app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
   const auth = c.get('auth');
@@ -185,9 +187,9 @@ app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
 });
 
 // ============================================================
-// 旁路: /v1/messages (Anthropic 原生协议直通)
-//   也要套鉴权, 不允许绕过. Ch3 末尾埋的
-//   「对外暴露的每个 endpoint 都走同一套鉴权」原则在本章兑现.
+// Side path: /v1/messages (Anthropic-native protocol passthrough)
+//   Also requires auth — no bypass. Delivers on the Ch3 principle:
+//   every publicly exposed endpoint shares the same auth layer.
 // ============================================================
 app.post('/v1/messages', requireGatewayKey, async (c) => {
   const auth = c.get('auth');
@@ -260,7 +262,7 @@ app.post('/v1/messages', requireGatewayKey, async (c) => {
   });
 });
 
-// 健康检查 (不鉴权, 方便外部探活)
+// Health check (no auth — for external probes)
 app.get('/healthz', (c) =>
   c.json({
     ok: true,
