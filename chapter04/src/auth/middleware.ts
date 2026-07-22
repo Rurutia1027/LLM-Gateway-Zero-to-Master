@@ -1,5 +1,5 @@
 import type {Context, MiddlewareHandler} from 'hono'; 
-import {and, eq} from 'drizzle-orm'; 
+import {eq} from 'drizzle-orm'; 
 
 import {getDb} from '../db/client.js'; 
 import {keys, orgs, users} from '../db/schema.js'; 
@@ -51,7 +51,7 @@ export const requireGatewayKey: MiddlewareHandler<{
     if (rows.length === 0) {
         return c.json({error: {message: 'invalid key'}}, 401); 
     }
-    const row = rows[0]; 
+    const row = rows[0]!; 
     const now = Date.now(); 
 
     // key, user, org disabled or key is revoked

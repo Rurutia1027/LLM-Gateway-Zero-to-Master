@@ -6,6 +6,10 @@ node_modules/
 .env.*
 !.env.example
 
+# Local SQLite databases (chapter04+)
+**/data/*.db
+**/data/*.db-*
+
 # Build / cache
 dist/
 build/

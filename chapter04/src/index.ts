@@ -126,8 +126,8 @@ app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
     );
   }
 
-  const adaptor = router.resolve(ir.model);
-  if (!adaptor) {
+  const adapter = router.resolve(ir.model);
+  if (!adapter) {
     return c.json(
       {
         error: {
@@ -139,8 +139,8 @@ app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
     );
   }
 
-  const endpoint = adaptor.getEndpoint(ir);
-  const { headers, body } = adaptor.buildRequest(ir);
+  const endpoint = adapter.getEndpoint(ir);
+  const { headers, body } = adapter.buildRequest(ir);
 
   const start = Date.now();
   let upstreamResp: Response;
@@ -151,7 +151,7 @@ app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
       {
         key_id: auth.keyId,
         user_id: auth.userId,
-        provider: adaptor.name,
+        provider: adapter.name,
         model: ir.model,
         err: (err as Error).message,
       },
@@ -167,7 +167,7 @@ app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
       key_id: auth.keyId,
       user_id: auth.userId,
       org_id: auth.orgId,
-      provider: adaptor.name,
+      provider: adapter.name,
       model: ir.model,
       status: upstreamResp.status,
       latency_ms: Date.now() - start,
@@ -182,7 +182,7 @@ app.post('/v1/chat/completions', requireGatewayKey, async (c) => {
     });
   }
 
-  const irResponse = await adaptor.parseResponse(upstreamResp, rawBody);
+  const irResponse = await adapter.parseResponse(upstreamResp, rawBody);
   return c.json(irResponse, 200);
 });
 
