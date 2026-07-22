@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, chapter01, chapter02, chapter03]
+    branches: [main, master, chapter01, chapter02, chapter03, chapter04]
   pull_request:
     branches: [main, master]
 
@@ -21,6 +21,7 @@ jobs:
           - chapter01
           - chapter02
           - chapter03
+          - chapter04
         node-version: [20]
 
     defaults:
@@ -30,6 +31,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install native build tools
+        if: matrix.chapter == 'chapter04'
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -44,11 +52,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Ensure .env is not tracked
+      - name: Ensure secrets and local DB are not tracked
         working-directory: ${{ github.workspace }}
         run: |
-          if git ls-files --error-unmatch "${{ matrix.chapter }}/.env" 2>/dev/null; then
-            echo "::error::${{ matrix.chapter }}/.env must never be committed"
-            exit 1
-          fi
-          echo "OK: ${{ matrix.chapter }}/.env is not tracked"
+          set -euo pipefail
+          for f in \
+            "${{ matrix.chapter }}/.env" \
+            "${{ matrix.chapter }}/data/gateway.db"
+          do
+            if git ls-files --error-unmatch "$f" 2>/dev/null; then
+              echo "::error::$f must never be committed"
+              exit 1
+            fi
+            echo "OK: $f is not tracked"
+          done
