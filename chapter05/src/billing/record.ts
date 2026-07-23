@@ -1,22 +1,54 @@
-// UsageRecord read helpers
-//
-// INSERT / UPDATE for preConsume / postConsume / refund live in calculator.ts.
-// This module holds read-only queries: by trace_id, recent N by keyId / userId.
-//
-// Aggregate queries (by user / model / day) can use drizzle sql templates.
-// The chapter README has full SQL recipes.
-//
-// TODO(ch05): implement findByTraceId / listByKey / listByUser
-//   (requires usageRecords in schema.ts first).
+/**
+ * Helper utilities for inserting and querying UsageRecord. 
+ * 
+ * The INSERT / UPDATE operations for preConsume / postConsume / refund 
+ * are already implemented in calculators.ts.
+ * This module centralizes read-only queries, such as: 
+ * - Looking up a record by trace_id; 
+ * - Listing the most recent N records for a given keyId. 
+ * 
+ * The three aggregation queries (by user / by model / by day)
+ * are written directly in SQL using Drizzle's sql template. 
+*/
+import {desc, eq} from 'drizzle-orm'; 
+import {getDb} from '../db/client.js'; 
+import {usageRecords, type UsageRecord} from '../db/schema.js'; 
 
-export function findByTraceId(_traceId: string): unknown | null {
-  throw new Error('TODO(ch05): implement findByTraceId in billing/record.ts');
+// trace search 
+export function findByTraceId(traceId: string): UsageRecord | null {
+  const db = getDb(); 
+  const rows = db 
+    .select()
+    .from(usageRecords)
+    .where(eq(usageRecords.traceId, traceId))
+    .all(); 
+
+  return rows.length > 0 ? rows[0]! : null; 
 }
 
-export function listByKey(_keyId: number, _limit = 50): unknown[] {
-  throw new Error('TODO(ch05): implement listByKey in billing/record.ts');
+// list by keyId the most recent N records (for admin dashboard /admin/usage?keyId=...)
+export function listByKey(keyId: number, limit = 50): UsageRecord[] {
+  const db = getDb();
+  return db
+    .select()
+    .from(usageRecords)
+    .where(eq(usageRecords.keyId, keyId))
+    .orderBy(desc(usageRecords.createdAt))
+    .limit(limit)
+    .all();
 }
 
-export function listByUser(_userId: number, _limit = 50): unknown[] {
-  throw new Error('TODO(ch05): implement listByUser in billing/record.ts');
+
+// list by userId recently top  N records 
+export function listByUser(userId: number, limit = 50): UsageRecord[] {
+  const db = getDb();
+  return db
+    .select()
+    .from(usageRecords)
+    .where(eq(usageRecords.userId, userId))
+    .orderBy(desc(usageRecords.createdAt))
+    .limit(limit)
+    .all();
 }
+
+export { type UsageRecord };
