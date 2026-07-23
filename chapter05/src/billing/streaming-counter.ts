@@ -29,104 +29,104 @@
 //   ingestDelta() uses local estimaiton first, and the counter is calibrated with the actual 
 //   upstream usage when a usage event is received. 
 
-import { estimationCompletionTokens } from "./tokenizer.js";
+import { estimateCompletionTokens } from './tokenizer.js';
 
 export interface StreamingFinalize {
-  // Actual prompt tokens reported by the upstream usage event , 
-  // or the locally estimated value from th epreConsume stage as a fallback 
-  promptTokens: number; 
+  // Actual prompt tokens reported by the upstream usage event ,
+  // or the locally estimated value from the preConsume stage as a fallback
+  promptTokens: number;
 
-  // Accumulated completion tokens. 
-  // The upstream usage value tasks priority; otherwise, use the locally accumulated estimate. 
-  completionTokens: number; 
+  // Accumulated completion tokens.
+  // The upstream usage value takes priority; otherwise, use the locally accumulated estimate.
+  completionTokens: number;
 
-  // Whether the client disconnected before the stream completed. 
-  // If true, the main loop should immediately call postConsume(). 
-  abortedByClient: boolean ; 
+  // Whether the client disconnected before the stream completed.
+  // If true, the main loop should immediately call postConsume().
+  abortedByClient: boolean;
 }
 
 export class StreamingTokenCounter {
-  private readonly model: string; 
+  private readonly model: string;
 
   // prompt token count estimated during preConsume, used as a fallback value
-  private readonly fallbackPromptTokens: number; 
+  private readonly fallbackPromptTokens: number;
 
-  private upstreamPromptTokens: number | null = null; 
-  private upstreamCompletionTokens: number | null = null; 
+  private upstreamPromptTokens: number | null = null;
+  private upstreamCompletionTokens: number | null = null;
 
-  // Locally accumulated completion text received from streaming deltas. 
-  private localCompletionText = ''; 
+  // Locally accumulated completion text received from streaming deltas.
+  private localCompletionText = '';
 
-  // Locally estimated completion token count accumulated from each delta. 
-  // Each delta is encoded separately. The final full-text encoding can be used 
-  // as a more accurate local estimate if needed. 
-  private localCompletionTokens = 0 ; 
+  // Locally estimated completion token count accumulated from each delta.
+  // Each delta is encoded separately. The final full-text encoding can be used
+  // as a more accurate local estimate if needed.
+  private localCompletionTokens = 0;
 
-  private aborted = false; 
+  private aborted = false;
 
-  constructor( model: string, fallbackPromptTokens: number) {
-    this.model = model; 
-    this.fallbackPromptTokens = fallbackPromptTokens; 
+  constructor(model: string, fallbackPromptTokens: number) {
+    this.model = model;
+    this.fallbackPromptTokens = fallbackPromptTokens;
   }
 
   // Process a completion text delta received from the upstream (the literal content fragments from SSE choices[0].delta.content)
-  // and accumulate the locally estimated completion token count. 
-  // Performance note: 
-  // Encoding each delta takes 0 (len(delta))
-  // Accumulating the token count incrementally avoids re-encoding the entire 
-  // completion text after every delta. 
+  // and accumulate the locally estimated completion token count.
+  // Performance note:
+  // Encoding each delta takes O(len(delta))
+  // Accumulating the token count incrementally avoids re-encoding the entire
+  // completion text after every delta.
   ingestDelta(deltaText: string): void {
-    if (!deltaText) return; 
-    this.localCompletionText += deltaText; 
+    if (!deltaText) return;
+    this.localCompletionText += deltaText;
 
     // Simplified approach: estimate each delta independently and accumulate the results.
     // In rare cases, this may differ from encoding the complete text by 1-2 tokens.
     // This level of error is acceptable for billing purposes because postConsume()
     // uses the upstream usage value to correct the local estimate when available.
-    this.localCompletionText += estimationCompletionTokens(deltaText, this.model); 
+    this.localCompletionTokens += estimateCompletionTokens(deltaText, this.model);
   }
 
   /**
-   * Process a usage event sent by the upstream provider. 
-   * Example: 
-   *  - OpenAI: stream_options.include_usage 
-   *  - Anthropic: message_delta.usage 
-   * 
-   * Upstream usage values take priority over local estimates. 
-  */
- ingestUsage(usage: {
-  prompt_tokens?: number; 
-  completion_tokens?: number; 
- }): void {
-  if (typeof usage.prompt_tokens === 'number') {
-    this.upstreamPromptTokens = usage.prompt_tokens; 
+   * Process a usage event sent by the upstream provider.
+   * Example:
+   *  - OpenAI: stream_options.include_usage
+   *  - Anthropic: message_delta.usage
+   *
+   * Upstream usage values take priority over local estimates.
+   */
+  ingestUsage(usage: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  }): void {
+    if (typeof usage.prompt_tokens === 'number') {
+      this.upstreamPromptTokens = usage.prompt_tokens;
+    }
+
+    if (typeof usage.completion_tokens === 'number') {
+      this.upstreamCompletionTokens = usage.completion_tokens;
+    }
   }
 
-  if (typeof usage.completion_tokens === 'number') {
-    this.upstreamCompletionTokens = usage.completion_tokens; 
-  }
- }
   /**
    * Mark the stream as aborted by the client.
    *
    * This method is idempotent and can be called multiple times safely.
    */
-   markAborted(): void {
+  markAborted(): void {
     this.aborted = true;
   }
 
   /**
-   * Finalize the token count when the stream ends. 
-   * 
+   * Finalize the token count when the stream ends.
+   *
    * This applies to both normal stream completion ([DONE])
-   * and client-side disconnection. 
-   * 
-   * Returns the final prompt and completion token counts, 
-   * which are passed to postConsume() for final billing settlement. 
-  */
+   * and client-side disconnection.
+   *
+   * Returns the final prompt and completion token counts,
+   * which are passed to postConsume() for final billing settlement.
+   */
   finalize(): StreamingFinalize {
-    const promptTokens =
-      this.upstreamPromptTokens ?? this.fallbackPromptTokens;
+    const promptTokens = this.upstreamPromptTokens ?? this.fallbackPromptTokens;
 
     const completionTokens =
       // Prefer the upstream usage value because it is the most accurate.
@@ -140,5 +140,4 @@ export class StreamingTokenCounter {
       abortedByClient: this.aborted,
     };
   }
-
 }

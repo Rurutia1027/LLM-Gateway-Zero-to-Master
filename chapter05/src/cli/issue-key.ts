@@ -9,10 +9,6 @@
 //   npm run issue-key -- --org "X" --user "y" --name "k" --expires-days 30
 //
 // Prints plaintext Key to stdout — the only time it is visible.
-//
-// TODO(ch05): when creating a new user, set balanceMicro from INITIAL_BALANCE_CNY
-//   (and optionally accept --balance-cny). Without this, new users start at 0
-//   after schema adds the column default, or you rely on admin balance API.
 
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';
@@ -28,7 +24,7 @@ interface Args {
   userId?: number;
   name: string;
   expiresInDays?: number;
-  // TODO(ch05): balanceCny?: number;
+  balanceCny?: number;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -57,10 +53,10 @@ function parseArgs(argv: string[]): Args {
         args.expiresInDays = Number(v);
         i++;
         break;
-      // case '--balance-cny':
-      //   args.balanceCny = Number(v);
-      //   i++;
-      //   break;
+      case '--balance-cny':
+        args.balanceCny = Number(v);
+        i++;
+        break;
     }
   }
   if (!args.name) {
@@ -78,7 +74,7 @@ function main(): void {
   const args = parseArgs(process.argv.slice(2));
   const db = getDb();
   const now = Date.now();
-  // const INITIAL_BALANCE_CNY = Number(process.env.INITIAL_BALANCE_CNY ?? 100);
+  const INITIAL_BALANCE_CNY = Number(process.env.INITIAL_BALANCE_CNY ?? 100);
 
   let userId = args.userId;
   if (userId === undefined) {
@@ -101,9 +97,8 @@ function main(): void {
         orgId,
         name: args.user!,
         createdAt: now,
-        // TODO(ch05):
-        // balanceMicro: Math.round((args.balanceCny ?? INITIAL_BALANCE_CNY) * 1_000_000),
-        // userMultiplier: 1000,
+        balanceMicro: Math.round((args.balanceCny ?? INITIAL_BALANCE_CNY) * 1_000_000),
+        userMultiplier: 1000,
       })
       .returning()
       .all();
@@ -139,7 +134,7 @@ function main(): void {
   console.log('');
   console.log('Try it:');
   console.log(
-    `  curl -H "Authorization: Bearer ${generated.plaintext}" http://localhost:3001/v1/chat/completions ...`,
+    `  curl -H "Authorization: Bearer ${generated.plaintext}" http://localhost:${process.env.PORT ?? 3001}/v1/chat/completions ...`,
   );
 }
 

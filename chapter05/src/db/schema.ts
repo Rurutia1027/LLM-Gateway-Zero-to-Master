@@ -22,12 +22,6 @@
 //   3. usage_records.status lifecycle: reserved -> finalized / refunded / failed.
 //      reserved means pre-debit happened; finalized means postConsume finished.
 //
-// TODO(ch05):
-//   1. Add balanceMicro + userMultiplier columns on users
-//   2. Define prices table
-//   3. Define usageRecords table
-//   4. Export Price / UsageRecord inferred types
-
 import {
   integer,
   sqliteTable,
@@ -48,7 +42,7 @@ export const orgs = sqliteTable('orgs', {
 });
 
 // ============================================================
-// users: Ch4 base — TODO(ch05) add balanceMicro + userMultiplier
+// users: Ch4 base + balanceMicro / userMultiplier
 //
 //   balanceMicro: balance in 1e-6 CNY. preConsume -= cost;
 //                 postConsume += (preReserved - actualCost) to settle delta.
@@ -67,16 +61,16 @@ export const users = sqliteTable(
     email: text('email'),
     disabledAt: integer('disabled_at'),
     createdAt: integer('created_at').notNull(),
-    
+
     // ----- Added in v0.5 -----
     /** Balance in 1e-6 CNY (micro-yuan). Default: INITIAL_BALANCE_CNY × 1_000_000. */
     balanceMicro: integer('balance_micro').notNull().default(0),
     /** User multiplier as a milli-integer. Default 1000 = 1.0x. */
-    userMultiplier: integer('user_multiplier').notNull().default(1000), 
+    userMultiplier: integer('user_multiplier').notNull().default(1000),
   },
-  (table) => [
-    uniqueIndex('users_org_email_idx').on(table.orgId, table.email),
-  ],
+  (table) => ({
+    emailIdx: uniqueIndex('users_org_email_idx').on(table.orgId, table.email),
+  }),
 );
 
 // ============================================================
@@ -98,10 +92,10 @@ export const keys = sqliteTable(
     lastUsedAt: integer('last_used_at'),
     createdAt: integer('created_at').notNull(),
   },
-  (table) => [
-    uniqueIndex('keys_key_hash_idx').on(table.keyHash),
-    index('keys_user_idx').on(table.userId),
-  ],
+  (table) => ({
+    keyHashIdx: uniqueIndex('keys_key_hash_idx').on(table.keyHash),
+    userIdx: index('keys_user_idx').on(table.userId),
+  }),
 );
 
 // ============================================================
@@ -115,21 +109,22 @@ export const keys = sqliteTable(
 //   effective_to null = still active.
 // ============================================================
 export const prices = sqliteTable(
-  'prices', 
+  'prices',
   {
-    id: integer('id').primaryKey({autoIncrement: true}), 
-    model: text('model').notNull(), 
-    provider: text('provider').notNull(), 
-    inputPriceMicroPer1M: integer('input_price_micro_per_1m').notNull(), 
-    outputPriceMicroPer1M: integer('output_price_micro_per_1m').notNull(), 
-    modelMultiplier: integer('model_multiplier').notNull().default(1000), 
-    effectiveFrom: integer('effective_from').notNull(), 
-    effectiveTo: integer('effective_to'), 
-    createdAt: integer('created_at').notNull(),  
-  }, 
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    model: text('model').notNull(),
+    provider: text('provider').notNull(),
+    inputPriceMicroPer1M: integer('input_price_micro_per_1m').notNull(),
+    outputPriceMicroPer1M: integer('output_price_micro_per_1m').notNull(),
+    modelMultiplier: integer('model_multiplier').notNull().default(1000),
+    effectiveFrom: integer('effective_from').notNull(),
+    effectiveTo: integer('effective_to'),
+    createdAt: integer('created_at').notNull(),
+  },
   (table) => ({
-    modelProviderIdx: uniqueIndex('prices_model_provider_idx').on(table.model, table.provider), 
-  }), 
+    // Non-unique: price changes INSERT a new row (do not UPDATE), so history can coexist.
+    modelProviderIdx: index('prices_model_provider_idx').on(table.model, table.provider),
+  }),
 ); 
 
 // ============================================================
@@ -146,62 +141,61 @@ export const prices = sqliteTable(
 //     prompt_cost / completion_cost, prompt_tokens / completion_tokens,
 //     estimated_prompt_tokens, multiplier_snapshot (user × channel × model product)
 // ============================================================
-export const usageRecords = sqliteTable('usage_records', { 
-  id: integer('id').primaryKey({autoIncrement: true}), 
+export const usageRecords = sqliteTable(
+  'usage_records',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
 
-  // trace id 
-  traceId: text('trace_id').notNull(), 
+    // trace id
+    traceId: text('trace_id').notNull(),
 
-  userId: integer('user_id').notNull(), 
+    userId: integer('user_id').notNull(),
+    orgId: integer('org_id').notNull(),
+    keyId: integer('key_id').notNull(),
 
-  orgId: integer('org_id').notNull(), 
+    // model / provider
+    model: text('model').notNull(),
+    provider: text('provider').notNull(),
 
-  keyId: integer('key_id').notNull(), 
+    // real token number (upstream received; accumulate based on streaming)
+    promptTokens: integer('prompt_tokens').notNull().default(0),
+    completionTokens: integer('completion_tokens').notNull().default(0),
 
-  // model / provider  
-  model: text('model').notNull(), 
-  provider: text('provider').notNull(), 
+    // local tiktoken estimated input token (for reconciliation)
+    estimatedPromptTokens: integer('estimated_prompt_tokens').notNull().default(0),
 
-  // real token number (upstream received; accumulate based on streaming)
-  promptTokens: integer('prompt_tokens').notNull().default(0), 
-  completionTokens: integer('completion_tokens').notNull().default(0), 
+    // cost decompose (unit=micro-CNY)
+    promptCost: integer('prompt_cost').notNull().default(0),
+    completionCost: integer('completion_cost').notNull().default(0),
+    finalCost: integer('final_cost').notNull().default(0),
 
-  // local tiktoken estimated input token (for reconciliation)
-  estimatedPromptTokens: integer('estimated_prompt_tokens').notNull().default(0), 
+    // pre-reserved cost (before postConsume)
+    preReservedCost: integer('pre_reserved_cost').notNull().default(0),
 
-  // cost decompose (unit=micro-CNY) 
-  promptCost: integer('prompt_cost').notNull().default(0), 
-  completionCost: integer('completion_cost').notNull().default(0), 
-  finalCost: integer('final_cost').notNull().default(0), 
+    // user × channel × model product (for reconciliation)
+    multiplierSnapshot: integer('multiplier_snapshot').notNull().default(1_000_000_000),
 
+    // status: reserved / finalized / refunded / failed
+    status: text('status').notNull().default('reserved'),
 
-  // pre-reserved cost (before postConsume) 
-  preReservedCost: integer('pre_reserved_cost').notNull().default(0), 
+    // stream, this is used in streaming purchase
+    isStream: integer('is_stream', { mode: 'boolean' }).notNull().default(false),
 
-  // user × channel × model product (for reconciliation)
-  multiplierSnapshot: integer('multiplier_snapshot').notNull().default(1_000_000_000), 
+    // error message (status = failed only)
+    errorMessage: text('error_message'),
 
-  // status: reserved / finalized / refunded / failed 
-  status: text('status').notNull().default('reserved'), 
+    createdAt: integer('created_at').notNull(),
 
-  // stream, this is used in streaming purchase 
-  isStream: integer('is_stream', {mode: 'boolean'}).notNull().default(false), 
-
-  // error message (status = failed only)
-  errorMessage: text('error_message'), 
-
-  createdAt: integer('created_at').notNull(), 
-
-  // finalized time (status = reserved -> finalized only)
-  finalizedAt: integer('finalized_at'), 
-}, 
-(table) => ({
-  traceIdx: uniqueIndex('usage_records_trace_idx').on(table.traceId), 
-  userTimeIdx: index('usage_records_user_time_idx').on(table.userId, table.cratedAt), 
-  keyTimeIdx: index('usage_records_key_time_idx').on(table.keyId, table.createdAt), 
-  modelTimeIdx: index('usage_records_model_time_ids').on(table.model, table.createdAt), 
-  statusIdx: index('usage_records_status_idx').on(table.status), 
-  }), 
+    // finalized time (status = reserved -> finalized only)
+    finalizedAt: integer('finalized_at'),
+  },
+  (table) => ({
+    traceIdx: uniqueIndex('usage_records_trace_idx').on(table.traceId),
+    userTimeIdx: index('usage_records_user_time_idx').on(table.userId, table.createdAt),
+    keyTimeIdx: index('usage_records_key_time_idx').on(table.keyId, table.createdAt),
+    modelTimeIdx: index('usage_records_model_time_idx').on(table.model, table.createdAt),
+    statusIdx: index('usage_records_status_idx').on(table.status),
+  }),
 );
 
 export type Org = typeof orgs.$inferSelect;

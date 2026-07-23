@@ -101,36 +101,35 @@ export class PriceNotFoundError extends Error {
   }
 }
 
-// Seed the default price at startup to prevent the price table from being empty. 
-interface DefaultProceSeed {
-  model: string; 
-  provider: string; 
+// Seed the default price at startup to prevent the price table from being empty.
+interface DefaultPriceSeed {
+  model: string;
+  provider: string;
   // CNY / 1 M tokens. convert into micro CNY in funcs calculation
-  inputCnyPer1M: number; 
-  outputCnyPer1M : number; 
-  modelMultiplier?: number;  
-}; 
+  inputCnyPer1M: number;
+  outputCnyPer1M: number;
+  modelMultiplier?: number;
+}
 
 const DEFAULT_PRICES: DefaultPriceSeed[] = [
   // --- OPENAI ---
-  {model: 'gpt-4o-mini', provider: 'openai', inputCnyPer1M: 1.05, outputCnyPer1M: 4.32}, 
-  {model: 'gpt-4o', provider: 'openai', inputCnyPer1M: 17.5, outputCnyPer1M: 70},
-  {model: 'gpt-4-turbo', provider: 'openai', inputCnyPer1M: 70, outputCnyPer1M: 215}, 
-  {model: 'o1-mini', provider: 'openai', inputCnyPer1M: 21, outputCnyPer1M: 84}, 
-  {model: 'o3-mini', provider: 'openai', inputCnyPer1M: 7.92, outputCnyPer1M: 31.68},
+  { model: 'gpt-4o-mini', provider: 'openai', inputCnyPer1M: 1.05, outputCnyPer1M: 4.32 },
+  { model: 'gpt-4o', provider: 'openai', inputCnyPer1M: 17.5, outputCnyPer1M: 70 },
+  { model: 'gpt-4-turbo', provider: 'openai', inputCnyPer1M: 70, outputCnyPer1M: 215 },
+  { model: 'o1-mini', provider: 'openai', inputCnyPer1M: 21, outputCnyPer1M: 84 },
+  { model: 'o3-mini', provider: 'openai', inputCnyPer1M: 7.92, outputCnyPer1M: 31.68 },
   //-- DeepSeek (CNY)
-  {model: 'deepseek-chat', provider: 'deepseek', inputCnyPer1M: 2, outputCnyPer1M: 8}, 
-  {model: 'deepseek-reasoner', provider: 'deepseek', inputCnyPer1M: 4, outputCnyPer1M: 16}, 
-  // -- Anthropic --- 
+  { model: 'deepseek-chat', provider: 'deepseek', inputCnyPer1M: 2, outputCnyPer1M: 8 },
+  { model: 'deepseek-reasoner', provider: 'deepseek', inputCnyPer1M: 4, outputCnyPer1M: 16 },
+  // -- Anthropic ---
   { model: 'claude-3-5-sonnet-20241022', provider: 'anthropic', inputCnyPer1M: 21.6, outputCnyPer1M: 108 },
   { model: 'claude-3-5-haiku-20241022', provider: 'anthropic', inputCnyPer1M: 7.2, outputCnyPer1M: 28.8 },
   { model: 'claude-3-opus-20240229', provider: 'anthropic', inputCnyPer1M: 108, outputCnyPer1M: 540 },
-]; 
-
+];
 
 /** Clear cache. Admin should call this after price changes. */
 export function invalidatePriceCache(): void {
-  throw new Error('TODO(ch05): implement invalidatePriceCache in billing/prices.ts');
+  CACHE.clear();
 }
 
 /**

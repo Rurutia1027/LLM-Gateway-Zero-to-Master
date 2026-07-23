@@ -121,7 +121,7 @@ export function estimatePromptTokens(messages: IRMessage[], model: string): numb
  * - The local estimation serves as a real-time usage estimation and a fallback
  *   when the upstream provider does not return usage information. 
 */
-export function estimationCompletionTokens(text: string, model: string): number {
+export function estimateCompletionTokens(text: string, model: string): number {
   if (!text) return 0; 
   const enc = getEncoder(pickEncoding(model)); 
   return enc.encode(text).length; 
