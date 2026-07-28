@@ -1,3 +1,4 @@
+import { inspect } from "util";
 import type {LimitKey, TpmReserveResult} from "./types.js"; 
 
 const DEFAULT_WINDOWS_MS = 60_000; 
@@ -56,6 +57,42 @@ export class TpmReservationLimiter {
             limit, 
             reservedTokens: tokens, 
         }; 
+    }
+
+    
+   commit(key: LimitKey, reservedTokens: number, actualTokens: number): void {
+    const delta = actualTokens - reservedTokens; 
+    if (delta === 0) return; 
+
+    const bucket = this.store.get(key); 
+    const now = Date.now(); 
+
+    if (!bucket || now - bucket.windowStartMs >= this.windowMs) {
+        // bucket is already expired, or doesn't exist --> create a new bucket  
+        if (actualTokens > 0) {
+            this.store.set(key, {windowStartMs: now, tokenCount: actualTokens}); 
+        }
+        return 
+    }
+
+    bucket.tokenCount = Math.max(0, bucket.tokenCount + delta); 
+   }
+
+    // release all reserved tokens(upstream invoke failed)
+    // this operation = commit(key, reserved, 0)
+    release(key: LimitKey, reservedTokens: number): void {
+        this.commit(key, reservedTokens, 0); 
+    }
+
+    inspectTokens(key: LimitKey): number {
+        const bucket = this.store.get(key); 
+        if (!bucket) return 0; 
+        const now = Date.now(); 
+        if (now - bucket.windowStartMs >= this.windowMs) {
+            // bucket start ms is expired , reset the bucket  
+            return 0; 
+        }
+        return bucket.tokenCount; 
     }
 
 
