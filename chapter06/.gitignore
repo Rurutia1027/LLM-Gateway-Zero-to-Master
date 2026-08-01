@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Secrets — never commit local credentials
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Local SQLite DB
+data/
+
+# Build / cache
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
