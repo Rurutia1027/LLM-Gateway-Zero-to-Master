@@ -59,3 +59,30 @@ export interface IRChatResponse {
     // upstream passthrough fields 
     [key: string]: unknown; 
 }
+
+export interface OpenAIDeltaChunk {
+    id: string; 
+    object: 'chat.completion.chunk'; 
+    created: number; 
+    model: string; 
+    choices: Array<{
+        index: number; 
+        delta: {
+            role?: 'assistant'; 
+            content?: string | null; 
+            tool_calls?: Array<{
+                index: number; 
+                id?: string; 
+                type?: 'function'; 
+                function?: {name?: string; arguments?: string}; 
+            }>; 
+            reasoning_content?: string; 
+        }; 
+        finish_reason: string | null; 
+    }>; 
+    usage?: {
+        prompt_tokens: number; 
+        completion_tokens: number; 
+        total_tokens: number; 
+    }; 
+}
