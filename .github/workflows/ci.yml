@@ -23,6 +23,7 @@ jobs:
           - chapter03
           - chapter04
           - chapter05
+          - chapter06
           - chapter07
         node-version: [20]
 
