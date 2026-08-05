@@ -16,7 +16,7 @@ export interface ProviderAdapter {
 
     parseResponse(upstreamResp: Response, rawBody: string): Promise<IRChatResponse>; 
 
-    buildStreamRequest(ir: IRChatRequest): {headrs: Record<string, string>; body: string}; 
+    buildStreamRequest(ir: IRChatRequest): { headers: Record<string, string>; body: string };
 
     newStreamState(): StreamState; 
 
