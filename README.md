@@ -9,7 +9,7 @@ Stack: Node.js 20+ · Hono · better-sqlite3 + Drizzle · js-tiktoken
 | Chapter | Version | Directory | What you get |
 |---------|---------|-----------|--------------|
 | Ch 1 | v0.1 | [`chapter01`](./chapter01) | 30-line Hono passthrough; OpenAI-protocol inbound, forwarded as-is |
-| Ch 2 | v0.2 | [`chapter02`](./chapter02) | IR + `ProviderAdaptor`; route OpenAI / DeepSeek by `model` |
+| Ch 2 | v0.2 | [`chapter02`](./chapter02) | IR + `ProviderAdapter`; route OpenAI / DeepSeek by `model` |
 | Ch 3 | v0.3 | [`chapter03`](./chapter03) | Bidirectional Anthropic Messages translation + `/v1/messages` bypass |
 | Ch 4 | v0.4 | [`chapter04`](./chapter04) | Internal keys (`sk-gw-`), Org / User / Key + SQLite |
 | Ch 5 | v0.5 | [`chapter05`](./chapter05) | Token counting, price table, multipliers, two-phase billing, UsageRecord |
@@ -34,7 +34,7 @@ curl -X POST http://localhost:3000/v1/chat/completions \
 
 ## Chapter 2 · One endpoint, multiple providers (v0.2)
 
-Introduce a shared IR (OpenAI Chat Completions as the internal gold standard) and the `ProviderAdaptor` abstraction. Clients only change the `model` field; the gateway routes by prefix to OpenAI or DeepSeek.
+Introduce a shared IR (OpenAI Chat Completions as the internal gold standard) and the `ProviderAdapter` abstraction. Clients only change the `model` field; the gateway routes by prefix to OpenAI or DeepSeek.
 
 ```bash
 cd chapter02
