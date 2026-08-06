@@ -1,13 +1,13 @@
 {
   "include": [
-    "src/adaptors/**/*.ts",
+    "src/adapters/**/*.ts",
     "src/streaming/anthropic-events.ts",
     "src/db/client.ts",
     "src/db/migrate.ts"
   ],
   "exclude": [
-    "src/adaptors/__tests__/**",
-    "src/adaptors/base.ts",
+    "src/adapters/__tests__/**",
+    "src/adapters/base.ts",
     "src/db/__tests__/**",
     "**/*.test.ts",
     "**/node_modules/**"
