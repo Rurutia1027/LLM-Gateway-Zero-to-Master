@@ -1,5 +1,8 @@
 # Zero to Master of LLM Gateway
 
+[![CI](https://github.com/Rurutia1027/LLM-Gateway-Zero-to-Master/actions/workflows/ci.yml/badge.svg)](https://github.com/Rurutia1027/LLM-Gateway-Zero-to-Master/actions/workflows/ci.yml)
+[![ch07 coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Rurutia1027/LLM-Gateway-Zero-to-Master/main/chapter07/coverage-badge.json)](./chapter07)
+
 Build an enterprise LLM API gateway from scratch in TypeScript. This repo ships the companion code for the first five chapters (`chapter01`–`chapter05`), evolving from v0.1 to v0.5: passthrough → multi-provider routing → Anthropic protocol adapter → internal key auth → two-phase billing.
 
 Stack: Node.js 20+ · Hono · better-sqlite3 + Drizzle · js-tiktoken

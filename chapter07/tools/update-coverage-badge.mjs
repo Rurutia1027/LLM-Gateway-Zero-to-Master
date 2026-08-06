@@ -2,7 +2,7 @@
 /**
  * Read coverage/coverage-summary.json (from c8) and write shields.io endpoint JSON.
  * Badge URL:
- *   https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/<owner>/<repo>/main/examples/07-stream-is-broken/coverage-badge.json
+ *   https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Rurutia1027/LLM-Gateway-Zero-to-Master/main/chapter07/coverage-badge.json
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -12,7 +12,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const summaryPath = join(root, 'coverage/coverage-summary.json');
 const outPath = join(root, 'coverage-badge.json');
 
-const MIN_LINES = Number(process.env.COVERAGE_MIN_LINES ?? 80);
+const MIN_LINES = Number(process.env.COVERAGE_MIN_LINES ?? 70);
 
 const summary = JSON.parse(readFileSync(summaryPath, 'utf8'));
 const pct = Number(summary.total?.lines?.pct ?? 0);

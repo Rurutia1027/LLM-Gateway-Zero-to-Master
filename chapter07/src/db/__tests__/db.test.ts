@@ -34,7 +34,7 @@ describe('db migrations + schema CRUD', () => {
 
         const sqlite = getRawSqlite();  
         const tables = (
-            sqlite.prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY names`).all() as Array<{
+            sqlite.prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`).all() as Array<{
                 name: string
             }>
         ).map((r) => r.name); 
@@ -174,6 +174,7 @@ describe('db migrations + schema CRUD', () => {
                 name: 'b',
                 createdAt: now, 
             })
+            .run();
         }, /UNIQUE/i); 
     }); 
 
