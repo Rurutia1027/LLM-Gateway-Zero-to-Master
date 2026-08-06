@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, chapter01, chapter02, chapter03, chapter04, chapter05, chapter06, chapter07, '07']
+    branches: [main, master, chapter07, '07']
   pull_request:
     branches: [main, master]
 
@@ -18,12 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         chapter:
-          - chapter01
-          - chapter02
-          - chapter03
-          - chapter04
-          - chapter05
-          - chapter06
           - chapter07
         node-version: [20]
 
@@ -49,11 +43,10 @@ jobs:
         run: npm run typecheck
 
       - name: Test with coverage
-        if: matrix.chapter == 'chapter07'
         run: npm run test:coverage
 
       - name: Upload coverage report
-        if: matrix.chapter == 'chapter07' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: chapter07-coverage
