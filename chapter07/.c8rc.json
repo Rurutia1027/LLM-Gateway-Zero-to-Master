@@ -1,6 +1,17 @@
 {
-  "include": ["src/adapters/**/*.ts"],
-  "exclude": ["src/adapters/__tests__/**"],
+  "include": [
+    "src/adaptors/**/*.ts",
+    "src/streaming/anthropic-events.ts",
+    "src/db/client.ts",
+    "src/db/migrate.ts"
+  ],
+  "exclude": [
+    "src/adaptors/__tests__/**",
+    "src/adaptors/base.ts",
+    "src/db/__tests__/**",
+    "**/*.test.ts",
+    "**/node_modules/**"
+  ],
   "reporter": ["text", "lcov", "json-summary", "html"],
   "reports-dir": "coverage",
   "check-coverage": true,
