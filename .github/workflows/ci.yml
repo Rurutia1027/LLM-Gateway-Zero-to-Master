@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, chapter01, chapter02, chapter03, chapter04, chapter05]
+    branches: [main, master, chapter01, chapter02, chapter03, chapter04, chapter05, chapter06, chapter07, '07']
   pull_request:
     branches: [main, master]
 
@@ -47,6 +47,21 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Test with coverage
+        if: matrix.chapter == 'chapter07'
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: matrix.chapter == 'chapter07' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chapter07-coverage
+          path: |
+            chapter07/coverage/lcov.info
+            chapter07/coverage/coverage-summary.json
+            chapter07/coverage/lcov-report
+          if-no-files-found: warn
 
       - name: Ensure secrets and local DB are not tracked
         working-directory: ${{ github.workspace }}
