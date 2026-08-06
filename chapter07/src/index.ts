@@ -23,4 +23,4 @@ app.get('/healthz', (c) => {
 
 const port = Number(process.env.PORT ?? 3000); 
 serve({fetch: app.fetch, port});
-logger.info(`Gateway v0.7 listening `);  
+logger.info(`Gateway v0.7 listening on http://localhost${port}`);  

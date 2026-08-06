@@ -2,7 +2,7 @@
   "name": "ch02-one-endpoint-three-providers",
   "version": "0.2.0",
   "private": true,
-  "description": "AI Token Gateway in Practice — Chapter 2 companion example: ProviderAdaptor abstraction + route by model (OpenAI / DeepSeek)",
+  "description": "AI Token Gateway in Practice — Chapter 2 companion example: ProviderAdapter abstraction + route by model (OpenAI / DeepSeek)",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

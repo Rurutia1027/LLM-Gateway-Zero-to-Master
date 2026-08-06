@@ -131,7 +131,7 @@ export interface AnthropicResponse {
 
 // ---------- Main: AnthropicAdaptor ----------
 
-export class AnthropicAdaptor implements ProviderAdapter {
+export class AnthropicAdapter implements ProviderAdapter {
   readonly name: string;
   private readonly baseURL: string;
   private readonly apiKey: string;

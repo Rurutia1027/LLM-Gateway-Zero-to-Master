@@ -1,0 +1,13 @@
+{
+  "include": ["src/adapters/**/*.ts"],
+  "exclude": ["src/adapters/__tests__/**"],
+  "reporter": ["text", "lcov", "json-summary", "html"],
+  "reports-dir": "coverage",
+  "check-coverage": true,
+  "lines": 80,
+  "statements": 80,
+  "functions": 80,
+  "branches": 50,
+  "all": true,
+  "temp-directory": "./coverage/tmp"
+}
