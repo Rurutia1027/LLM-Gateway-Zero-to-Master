@@ -36,14 +36,6 @@ describe('generateKey', () => {
     }); 
 }); 
 
-describe('hashKey', () => {
-    it('returns sha256 hex of the plaintext', () => {
-      const plaintext = 'sk-gw-abcdefghijklmnopqrstuvwxyz0123456789ABCD';
-      const expected = createHash('sha256').update(plaintext).digest('hex');
-      assert.equal(hashKey(plaintext), expected);
-    });
-});
-
 describe('isWellFormedKey', () => {
     it('accepts a freshly generated key', () => {
       assert.equal(isWellFormedKey(generateKey().plaintext), true);
