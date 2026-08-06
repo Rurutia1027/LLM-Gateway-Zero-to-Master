@@ -36,7 +36,7 @@ import { stopReasonToFinishReason } from '../adaptors/anthropic.js';
 // ---------- Anthropic streaming event types ----------
 
 export type AnthropicStreamEvent =
-  | AnthropicMessageStartEvent
+  | AnthorpicMessageStartEvent
   | AnthropicContentBlockStartEvent
   | AnthropicContentBlockDeltaEvent
   | AnthropicContentBlockStopEvent
@@ -45,7 +45,7 @@ export type AnthropicStreamEvent =
   | AnthropicPingEvent
   | AnthropicErrorEvent;
 
-interface AnthropicMessageStartEvent {
+interface AnthorpicMessageStartEvent {
   type: 'message_start';
   message: {
     id: string;

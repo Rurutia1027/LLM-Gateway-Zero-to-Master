@@ -1,3 +1,4 @@
+import { de } from "zod/v4/locales";
 import { stopReasonToFinishReason } from "../adapters/anthropic-map.js";
 import type { OpenAIDeltaChunk } from "../types/ir.js";
 
@@ -11,7 +12,7 @@ export type AnthropicStreamEvent =
   | AnthropicPingEvent
   | AnthropicErrorEvent;
 
-interface AnthorpicMessageStartEvent {
+interface AnthropicMessageStartEvent {
     type: 'message_start'; 
     message: {
         id: string; 
@@ -216,6 +217,8 @@ export class AnthropicEventNormalizer {
 
             case 'content_block_stop': 
                 return {chunks: [], done: false}; 
+            default: 
+                return {chunks: [], done: false};  
         }
     }
 }
