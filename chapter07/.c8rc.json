@@ -9,6 +9,7 @@
     "src/adapters/__tests__/**",
     "src/adapters/base.ts",
     "src/db/__tests__/**",
+    "src/auth/__tests__/**", 
     "**/*.test.ts",
     "**/node_modules/**"
   ],
