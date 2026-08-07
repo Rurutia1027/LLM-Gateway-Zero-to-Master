@@ -3,7 +3,6 @@ import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
 import o200k_base from 'js-tiktoken/ranks/o200k_base';
 
 import type { IRMessage } from "../types/ir.js";
-import { en } from "zod/v4/locales";
 
 const ENCODERS = new Map<TiktokenEncoding, Tiktoken>(); 
 
@@ -54,7 +53,7 @@ export function estimatePromptTokens(messages: IRMessage[], model: string): numb
     return tokens; 
 }
 
-export function estimateResponseTokens(text: string, model: string): number {
+export function estimateCompletionTokens(text: string, model: string): number {
     if (!text) return 0;  
     const enc = getEncoder(pickEncoding(model));  
     return enc.encode(text).length; 

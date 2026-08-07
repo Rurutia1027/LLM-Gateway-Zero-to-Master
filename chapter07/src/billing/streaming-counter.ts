@@ -25,7 +25,6 @@
 //     the upstream sends a usage event.
 //
 
-import { fa } from 'zod/v4/locales';
 import { estimateCompletionTokens } from './tokenizer.js';
 
 export interface StreamingFinalize {
