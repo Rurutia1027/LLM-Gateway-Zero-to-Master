@@ -38,7 +38,7 @@ export function checkMonthlyQuota(keyId: number, reservingMicro: number): QuotaC
     // IF quota_reset_at < monthStart THEN monthly_used = 0, quota_reset_at = now 
     db.update(keys)
         .set({
-            monthlyUsedMicro: sql`CASE WHEN ${keys.quotaResetAt} < ${monthStart} THEN 0 ELSE ${keys.monthlyQuotaMicro} END`, 
+            monthlyUsedMicro: sql`CASE WHEN ${keys.quotaResetAt} < ${monthStart} THEN 0 ELSE ${keys.monthlyUsedMicro} END`, 
             quotaResetAt: sql`CASE WHEN ${keys.quotaResetAt} < ${monthStart} THEN ${now} ELSE ${keys.quotaResetAt} END`, 
         })
         .where(eq(keys.id, keyId))

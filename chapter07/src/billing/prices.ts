@@ -27,7 +27,7 @@ export interface ResolvedPrice {
     outputPricePerToken: number; 
 
     // model self multiplier 
-    modelMultipler: number; 
+    modelMultiplier: number; 
 
     // which price record in `usage_records`  this is based on 
     priceId: number; 
@@ -91,7 +91,7 @@ export function getCurrentPrice(model: string, provider: string): ResolvedPrice 
     const price: ResolvedPrice = {
         inputPricePerToken: row.inputPriceMicroPer1M / 1_000_000, 
         outputPricePerToken: row.outputPriceMicroPer1M / 1_000_000,  
-        modelMultipler: row.modelMultiplier, 
+        modelMultiplier: row.modelMultiplier, 
         priceId: row.id, 
     }; 
 
