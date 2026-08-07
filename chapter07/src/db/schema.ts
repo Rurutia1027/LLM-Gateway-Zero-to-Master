@@ -211,4 +211,13 @@ export const usageRecords = sqliteTable(
 // ============================================================
 // Runtime types
 // ============================================================
-
+export type Org = typeof orgs.$inferSelect;
+export type NewOrg = typeof orgs.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Key = typeof keys.$inferSelect;
+export type NewKey = typeof keys.$inferInsert;
+export type Price = typeof prices.$inferSelect;
+export type NewPrice = typeof prices.$inferInsert;
+export type UsageRecord = typeof usageRecords.$inferSelect;
+export type NewUsageRecord = typeof usageRecords.$inferInsert;
