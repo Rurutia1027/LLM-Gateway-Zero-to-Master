@@ -71,7 +71,7 @@ export function resolveMultipler(ctx: MultiplierContext): CombinedMultipler {
 
     const userMul = userRows.length > 0 ? userRows[0]!.m : MULTIPLIER_SCALE; 
     const price = getCurrentPrice(ctx.model, ctx.provider); 
-    const modelMul = price.modelMultipler; 
+    const modelMul = price.modelMultiplier; 
     const channelMul = MULTIPLIER_SCALE; 
     const combined = userMul * channelMul * modelMul
 

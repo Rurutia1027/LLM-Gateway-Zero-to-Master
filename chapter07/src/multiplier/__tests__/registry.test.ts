@@ -111,7 +111,7 @@ describe('resolveMultipler', () => {
         assert.equal(mul.combinedFloat, (500 * 1000 * 1000) / (1_000_000_000)); 
     }); 
 
-    it('picks up updated modelMultipler after cache invalidate', () => {
+    it('picks up updated modelMultiplier after cache invalidate', () => {
         const fx = seedUserKeyPrice({modelMultiplier: 1000});  
         getDb() 
             .update(prices)
