@@ -1,4 +1,4 @@
-import { Tiktoken, getEncodingNameForModel, type TiktokenBPE } from "js-tiktoken/lite";
+import { Tiktoken, getEncodingNameForModel, TiktokenEncoding, type TiktokenBPE } from "js-tiktoken/lite";
 import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
 import o200k_base from 'js-tiktoken/ranks/o200k_base';
 
@@ -7,7 +7,7 @@ import { en } from "zod/v4/locales";
 
 const ENCODERS = new Map<TiktokenEncoding, Tiktoken>(); 
 
-function getEncoder(name: TikTokenEncoding): Tiktoken {
+function getEncoder(name: TiktokenEncoding): Tiktoken {
     let enc = ENCODERS.get(name); 
     if (enc) return enc; 
     const ranks = name === 'o200k_base' ? o200k_base : cl100k_base;  
